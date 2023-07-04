@@ -122,6 +122,7 @@ class Workspace {
             // let _compressedSize = 0
             // let _progressTrackerInterval;
             // Messenger.print(`TOTAL SIZE: ${_totalSize}`);
+            Messenger.print(`ZIP DEST PATH ... (${_destPath}.zip)`);
 
             let _ws = fs.createWriteStream(_destPath + '.zip');
             let _archive = archiver('zip');
@@ -146,34 +147,34 @@ class Workspace {
         return myPromise;
     }
 
-    getFolderTotalSize = async($folderDir) => {
-        const _self = this,
-              _arrayOfFiles = await _self.getAllFiles($folderDir);
-        let _totalSize = 0;
-        for(let i = 0; i < _arrayOfFiles.length; i++){
-            const _filePath = _arrayOfFiles[i];
-            const _fileStat = await fs.promises.stat(_filePath);
-            _totalSize += _fileStat.size;
-        }
-        return _totalSize;
-    }
+    // getFolderTotalSize = async($folderDir) => {
+    //     const _self = this,
+    //           _arrayOfFiles = await _self.getAllFiles($folderDir);
+    //     let _totalSize = 0;
+    //     for(let i = 0; i < _arrayOfFiles.length; i++){
+    //         const _filePath = _arrayOfFiles[i];
+    //         const _fileStat = await fs.promises.stat(_filePath);
+    //         _totalSize += _fileStat.size;
+    //     }
+    //     return _totalSize;
+    // }
 
-    getAllFiles = async($dirPath, $arrayOfFiles) => {
-        const _self = this;
-        let _files = await fs.promises.readdir($dirPath);
-        $arrayOfFiles = $arrayOfFiles || [];
-        for(let i = 0; i < _files.length; i++){
-            const _subPath = path.join($dirPath, _files[i]);
-            const _subPathStat = await fs.promises.lstat(_subPath);
-            const _subPathIsDir = _subPathStat.isDirectory();
-            if(_subPathIsDir){
-                $arrayOfFiles = await _self.getAllFiles(_subPath, $arrayOfFiles);
-            }else{
-                $arrayOfFiles.push(_subPath);
-            }
-        }
-        return $arrayOfFiles;
-    }
+    // getAllFiles = async($dirPath, $arrayOfFiles) => {
+    //     const _self = this;
+    //     let _files = await fs.promises.readdir($dirPath);
+    //     $arrayOfFiles = $arrayOfFiles || [];
+    //     for(let i = 0; i < _files.length; i++){
+    //         const _subPath = path.join($dirPath, _files[i]);
+    //         const _subPathStat = await fs.promises.lstat(_subPath);
+    //         const _subPathIsDir = _subPathStat.isDirectory();
+    //         if(_subPathIsDir){
+    //             $arrayOfFiles = await _self.getAllFiles(_subPath, $arrayOfFiles);
+    //         }else{
+    //             $arrayOfFiles.push(_subPath);
+    //         }
+    //     }
+    //     return $arrayOfFiles;
+    // }
 }
 
 module.exports = Workspace;
