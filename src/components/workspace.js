@@ -84,10 +84,10 @@ class Workspace {
         if (_isWorkspaceExist) {
             await fs.promises.mkdir(_distFolderLoc);
 
-            // for (let i = 0; i < _self._allDockerFolder.length; i++){
-            //     let _distPath = path.join(CONFIG.DIRECTORY.DIST, process.env.CURDATE, _self._allDockerFolder[i]);
-            //     await fs.promises.mkdir(_distPath);
-            // }
+            for (let i = 0; i < _self._allDockerFolder.length; i++){
+                let _distPath = path.join(CONFIG.DIRECTORY.DIST, process.env.CURDATE, _self._allDockerFolder[i]);
+                await fs.promises.mkdir(_distPath);
+            }
         } else {
             throw new Error('WORKSPACE:[CREATE_DIST_FOLDER_FAIL]');
         }
@@ -113,7 +113,8 @@ class Workspace {
     }
 
     createZip = async ($srcDir, $destDir, $folder) => {
-        let _self = this;
+        let _self = this,
+            _destPath = path.join($destDir, $folder);
 
         let myPromise = new Promise(async (resolve, reject) => {
             Messenger.print(`CREATING ZIP ... (${$srcDir})`);
@@ -122,12 +123,11 @@ class Workspace {
             // let _progressTrackerInterval;
             // Messenger.print(`TOTAL SIZE: ${_totalSize}`);
 
-            let _ws = fs.createWriteStream($destDir + '.zip');
+            let _ws = fs.createWriteStream(_destPath + '.zip');
             let _archive = archiver('zip');
 
             _ws.on('close', function () {
                 Messenger.print[`FINISHED ZIP: (${$srcDir})`];
-                Messenger.print[`DESTINATION OF ZIP: (${$folder + '.zip'})`];
                 // clearInterval(_progressTrackerInterval);
                 resolve();
             });
