@@ -117,10 +117,10 @@ class Workspace {
 
         let myPromise = new Promise(async (resolve, reject) => {
             Messenger.print(`CREATING ZIP ... (${$srcDir})`);
-            let _totalSize = await _self.getFolderTotalSize($srcDir);
-            let _compressedSize = 0
-            let _progressTrackerInterval;
-            Messenger.print(`TOTAL SIZE: ${_totalSize}`);
+            // let _totalSize = await _self.getFolderTotalSize($srcDir);
+            // let _compressedSize = 0
+            // let _progressTrackerInterval;
+            // Messenger.print(`TOTAL SIZE: ${_totalSize}`);
 
             let _ws = fs.createWriteStream($destDir + '.zip');
             let _archive = archiver('zip');
@@ -128,7 +128,7 @@ class Workspace {
             _ws.on('close', function () {
                 Messenger.print[`FINISHED ZIP: (${$srcDir})`];
                 Messenger.print[`DESTINATION OF ZIP: (${$folder + '.zip'})`];
-                clearInterval(_progressTrackerInterval);
+                // clearInterval(_progressTrackerInterval);
                 resolve();
             });
 
@@ -136,12 +136,12 @@ class Workspace {
             _archive.directory($srcDir, false);
             _archive.finalize();
 
-            _progressTrackerInterval = setInterval(progressTracker, 1000);
+            // _progressTrackerInterval = setInterval(progressTracker, 1000);
 
-            function progressTracker() {
-                let _processed = _archive.pointer();
-                Messenger.print(`ZIP PROGRESS (${$srcDir}): ${(_processed / _totalSize * 100)}%`, true);
-            }
+            // function progressTracker() {
+            //     let _processed = _archive.pointer();
+            //     Messenger.print(`ZIP PROGRESS (${$srcDir}): ${(_processed / _totalSize * 100)}%`, true);
+            // }
         });
         return myPromise;
     }
