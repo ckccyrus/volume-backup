@@ -4,7 +4,7 @@ const appRoot = require('app-root-path');
 const Messenger = require(`${appRoot}/src/utils/messenger`);
 const Workspace = require(`${appRoot}/src/components/workspace`);
 
-class DockerBackupController {
+class VolumesBackupController {
 
     constructor() { }
 
@@ -18,6 +18,9 @@ class DockerBackupController {
         let _self = this;
         _self._workspace = new Workspace();
         await _self._workspace.init();
+        await _self._workspace.setupWorkspace();
+        await _self._workspace.scanVolumesPath();
+        await _self._workspace.createDistFolder();
         Messenger.openClose('CONTROLLER:/INIT WORKSPACE');
     }
 
@@ -29,4 +32,4 @@ class DockerBackupController {
     }
 }
 
-module.exports = DockerBackupController;
+module.exports = VolumesBackupController;

@@ -7,28 +7,27 @@ const CONFIG = require(`${appRoot}/src/config/config`);
 const Messenger = require(`${appRoot}/src/utils/messenger`);
 
 class Workspace {
-    _allDockerFolder;
+    _allVolumesFolder;
+    _blackList;
 
     constructor() {
         let _self = this;
         if (!process.env.VOLUME_PATH) throw new Error('process.env.VOLUME_PATH is undefined!');
         if (!process.env.CURDATE) throw new Error('process.env.CURDATE is undefined!');
     }
-    
+
     //---------------------------------------------------------------
     //------------------------------Init---------------------------------
 
     async init() {
         let _self = this;
-        await _self.setupWorkspace();
-        await _self.scanVolumePath();
-        await _self.createDistFolder();
+        _self._allVolumesFolder = {};
+        _self._blackList = (process.env.BLACKLIST) ? process.env.BLACKLIST.split(",") : [];
     }
 
-    setupWorkspace = async () => {
+    async setupWorkspace() {
         Messenger.openClose('WORKSPACE:SETUP WORK SPACE');
-        let _self = this,
-            _workspaceLoc = CONFIG.DIRECTORY.WORKSPACE,
+        let _workspaceLoc = CONFIG.DIRECTORY.WORKSPACE,
             _isWorkspaceExist = fs.existsSync(_workspaceLoc);
 
         if (_isWorkspaceExist) {
@@ -51,30 +50,34 @@ class Workspace {
         }
     }
 
-    scanVolumePath = async () => {
-        Messenger.openClose('WORKSPACE:SCAN DOCKER VOLUME');
+    async scanVolumesPath() {
+        Messenger.openClose(`WORKSPACE:SCAN VOLUMES: ${process.env.VOLUME_PATH}`);
         let _self = this,
             _isVolumePathExist = fs.existsSync(process.env.VOLUME_PATH);
 
         if (_isVolumePathExist) {
-            _self._allDockerFolder = await getAllDockerVolumes();
+            _self._allVolumesFolder = await getAllVolumesFolder();
+console.log('DEBUG: All Volumes Folder: ', _self._allVolumesFolder);
         } else {
             throw new Error(`${process.env.VOLUME_PATH} is not exist`);
         }
 
-        async function getAllDockerVolumes() {
+        async function getAllVolumesFolder() {
             try {
                 //ignore hidden files
-                return await fs.promises.readdir(process.env.VOLUME_PATH).then(list => list.filter(item => !/(^|\/)\.[^/.]/g.test(item)));
+                let _allFolders = await fs.promises.readdir(process.env.VOLUME_PATH).then(list => list.filter(item => !/(^|\/)\.[^/.]/g.test(item))),
+                    _allWhitelistFolders = _allFolders.filter($eachFolder =>  _self._blackList.indexOf($eachFolder) < 0 );
+
+                return _allWhitelistFolders;
             } catch (err) {
                 Messenger.openClose('WORKSPACE:[SCAN_DOCKER_VOLUME_FAIL]');
                 throw new Error('Error occurred while reading directory:', err)
             }
         }
-        Messenger.openClose('/WORKSPACE:SCAN DOCKER VOLUME');
+        Messenger.openClose(`/WORKSPACE:SCAN VOLUMES: ${process.env.VOLUME_PATH}`);
     }
 
-    createDistFolder = async () => {
+    async createDistFolder() {
         Messenger.openClose('WORKSPACE:CREATE DIST FOLDER');
         let _self = this,
             _workspaceLoc = CONFIG.DIRECTORY.WORKSPACE,
@@ -84,8 +87,8 @@ class Workspace {
         if (_isWorkspaceExist) {
             await fs.promises.mkdir(_distFolderLoc);
 
-            for (let i = 0; i < _self._allDockerFolder.length; i++){
-                let _distPath = path.join(CONFIG.DIRECTORY.DIST, process.env.CURDATE, _self._allDockerFolder[i]);
+            for (let i = 0; i < _self._allVolumesFolder.length; i++) {
+                let _distPath = path.join(CONFIG.DIRECTORY.DIST, process.env.CURDATE, _self._allVolumesFolder[i]);
                 await fs.promises.mkdir(_distPath);
             }
         } else {
@@ -98,18 +101,18 @@ class Workspace {
     //---------------------------------------------------------------
     //------------------------------Start backup---------------------------------
 
-    async zipAll(){
-        Messenger.openClose('WORKSPACE:ZIP ALL Docker Volumes');
+    async zipAll() {
+        Messenger.openClose('WORKSPACE:ZIP ALL Folder in Volumes');
         let _self = this;
-        for (let i = 0; i < _self._allDockerFolder.length; i++){
-            let _eachDocker = _self._allDockerFolder[i],
-                _eachDockerDestPath = path.join(CONFIG.DIRECTORY.DIST, process.env.CURDATE, _eachDocker),
-                _eachDockerSrcPath = path.join(process.env.VOLUME_PATH, _eachDocker);
-            
-            await _self.createZip(_eachDockerSrcPath, _eachDockerDestPath, _eachDocker);
+        for (let i = 0; i < _self._allVolumesFolder.length; i++) {
+            let _eachFolder = _self._allVolumesFolder[i],
+                _eachFolderDestPath = path.join(CONFIG.DIRECTORY.DIST, process.env.CURDATE, _eachFolder),
+                _eachFolderSrcPath = path.join(process.env.VOLUME_PATH, _eachFolder);
+
+            await _self.createZip(_eachFolderSrcPath, _eachFolderDestPath, _eachFolder);
         }
 
-        Messenger.openClose('/WORKSPACE:ZIP ALL Docker Volumes');
+        Messenger.openClose('/WORKSPACE:ZIP ALL Folder in Volumes');
     }
 
     createZip = async ($srcDir, $destDir, $folder) => {

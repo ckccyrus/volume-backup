@@ -1,5 +1,6 @@
 const appRoot = require('app-root-path');
-const DockerBackupController = require(`${appRoot}/src/controller/dockerBackup`);
+const VolumesBackupController = require(`${appRoot}/src/controller/volumesBackup`);
+
 
 const Messenger = require(`${appRoot}/src/utils/messenger`);
 
@@ -10,7 +11,8 @@ function getArgvValue($argv) {
 
 function checkArgv() {
     let _volume_path = getArgvValue('VOLUME_PATH'),
-        _curDate = getArgvValue('CURDATE');
+        _curDate = getArgvValue('CURDATE'),
+        _blackList = getArgvValue('BLACKLIST');
 
     if (!_volume_path || !_curDate) {
         throw (`Missing required argument:`);
@@ -18,6 +20,7 @@ function checkArgv() {
 
     process.env.VOLUME_PATH = _volume_path;
     process.env.CURDATE = _curDate;
+    process.env.BLACKLIST = _blackList;
 }
 
 
@@ -28,9 +31,9 @@ async function main() {
         checkArgv();
         // console.log('DEBUG process.env', process.env);
 
-        let _dockerBackupController = new DockerBackupController();
-        await _dockerBackupController.init();
-        await _dockerBackupController.startBackup();
+        let _volumesBackupController = new VolumesBackupController();
+        await _volumesBackupController.init();
+        await _volumesBackupController.startBackup();
 
     } catch ($err) {
         throw new Error($err);
