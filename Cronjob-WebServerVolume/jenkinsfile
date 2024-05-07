@@ -1,0 +1,39 @@
+pipeline{
+    options {
+        disableConcurrentBuilds() // Prevent this jenkins project run in parallel
+        buildDiscarder(logRotator(numToKeepStr: '20', artifactNumToKeepStr: '20')) //Remove old builds
+    }
+    agent {
+        label 'agent-frontend'
+    }
+    tools {
+        nodejs 'nodejs' // NodeJs configured in Jenkins -> Global Tools Configuration -> NodeJS section
+    }
+    environment {
+        AGENT_FRONTEND = 'agent-frontend'
+        WEB_SERVER_VOLUME_PATH = '/Volumes/WebServer/'
+        BLACKLIST = 'preview'
+    }
+    stages {
+        stage('Run:Backup@frontendServer'){
+            steps {
+                script {
+                    echo '==========================='
+                    echo 'Start running webServer volume backup on MM009 ...'
+
+                    catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+                        build job: "Backup-Volumes", wait: true, 
+                        parameters: [
+                            string(name: 'backup_agent', value: env.AGENT_FRONTEND),
+                            string(name: 'target_volumes_path', value: env.WEB_SERVER_VOLUME_PATH),
+                            string(name: 'folder_blacklist', value: env.BLACKLIST)
+                        ]
+                    }
+
+                    echo 'Finish running webServer volume backup on MM009 ...'
+                    echo '==========================='
+                }
+            }
+        }
+    }
+}

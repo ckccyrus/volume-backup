@@ -1,0 +1,59 @@
+pipeline{
+    options {
+        disableConcurrentBuilds() // Prevent this jenkins project run in parallel
+        buildDiscarder(logRotator(numToKeepStr: '20', artifactNumToKeepStr: '20')) //Remove old builds
+    }
+    agent {
+        label 'agent-internal-build'
+    }
+    tools {
+        nodejs 'nodejs' // NodeJs configured in Jenkins -> Global Tools Configuration -> NodeJS section
+    }
+    environment {
+        AGENT_PROD = 'agent-prod'
+        AGENT_INTERNAL_BUILD = 'agent-internal-build'
+        DOCKER_VOLUME_PATH = '/Volumes/DockerVolume/'
+    }
+    stages {
+        stage('Run:Backup@InternalServer'){
+            steps {
+                script {
+                    echo '==========================='
+                    echo 'Start running docker volume backup on MM014 ...'
+
+                    catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+                        build job: "Backup-Volumes", wait: true, 
+                        parameters: [
+                            string(name: 'backup_agent', value: env.AGENT_INTERNAL_BUILD),
+                            string(name: 'target_volumes_path', value: env.DOCKER_VOLUME_PATH),
+                            string(name: 'folder_blacklist', value: '')
+                        ]
+                    }
+
+                    echo 'Finish running docker volume backup on MM014 ...'
+                    echo '==========================='
+                }
+            }
+        }
+        stage('Run:Backup@ProdServer'){
+            steps {
+                script {
+                    echo '==========================='
+                    echo 'Start running docker volume backup on MM016 ...'
+
+                    catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+                        build job: "Backup-Volumes", wait: true, 
+                        parameters: [
+                            string(name: 'backup_agent', value: env.AGENT_PROD),
+                            string(name: 'target_volumes_path', value: env.DOCKER_VOLUME_PATH),
+                            string(name: 'folder_blacklist', value: '')
+                        ]
+                    }
+
+                    echo 'Finish running docker volume backup on MM016 ...'
+                    echo '==========================='
+                }
+            }
+        }
+    }
+}
